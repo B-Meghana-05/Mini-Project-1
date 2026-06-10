@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Clock & Timer</title>
+    <style>
+        :root {
+            --glass-bg: rgba(15, 23, 42, 0.45);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --primary-glow: #67e8f9;
+            --secondary-glow: #f472b6;
+            --text-main: #f8fafc;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /* Layered background: Vignette gradient overlaying a rich background image */
+            background: 
+                radial-gradient(circle at center, rgba(15, 23, 42, 0.3) 0%, rgba(15, 23, 42, 0.85) 100%),
+                url('https://images.unsplash.com/photo-1518156677180-95a2893f3e9f?q=80&w=1974&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            padding: 20px;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            width: 100%;
+            max-width: 480px;
+        }
+
+        @media (min-width: 768px) {
+            .dashboard {
+                max-width: 900px;
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        /* Glassmorphism Panel Styling */
+        .panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px) saturate(120%);
+            -webkit-backdrop-filter: blur(16px) saturate(120%);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 2.5rem;
+            text-align: center;
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .panel:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+        }
+
+        h2 {
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: rgba(248, 250, 252, 0.6);
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+        }
+
+        /* Clock Styling */
+        .clock-display {
+            font-size: 4rem;
+            font-weight: 700;
+            color: var(--text-main);
+            text-shadow: 0 0 20px rgba(103, 232, 249, 0.3);
+            font-variant-numeric: tabular-nums;
+            margin-bottom: 0.5rem;
+        }
+
+        .date-display {
+            font-size: 1.1rem;
+            color: var(--primary-glow);
+            font-weight: 500;
+            letter-spacing: 1px;
+        }
+
+        /* Timer Styling */
+        .timer-display {
+            font-size: 4rem;
+            font-weight: 700;
+            color: var(--text-main);
+            text-shadow: 0 0 20px rgba(244, 114, 182, 0.3);
+            font-variant-numeric: tabular-nums;
+            margin-bottom: 1.5rem;
+        }
+
+        .timer-inputs {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 1.5rem;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .input-group label {
+            font-size: 0.75rem;
+            color: rgba(248, 250, 252, 0.5);
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        input[type="number"] {
+            width: 70px;
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid var(--glass-border);
+            padding: 10px;
+            border-radius: 10px;
+            color: var(--text-main);
+            font-size: 1.2rem;
+            text-align: center;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input[type="number"]:focus {
+            border-color: var(--secondary-glow);
+        }
+
+        /* Custom arrows removal for inputs */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.95rem;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #ec4899, #f43f5e);
+            color: white;
+            box-shadow: 0 4px 14px 0 rgba(236, 72, 153, 0.3);
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 6px 20px 0 rgba(236, 72, 153, 0.5);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-main);
+            border: 1px solid var(--glass-border);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+        
+        /* State alterations handled by JS DOM manipulation */
+        .timer-finished {
+            animation: pulse-red 1.5s infinite;
+        }
+
+        @keyframes pulse-red {
+            0% { text-shadow: 0 0 10px rgba(239, 68, 68, 0.5); color: #fff; }
+            50% { text-shadow: 0 0 30px rgba(239, 68, 68, 0.9); color: #f87171; }
+            100% { text-shadow: 0 0 10px rgba(239, 68, 68, 0.5); color: #fff; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard">
+        <div class="panel">
+            <h2>Digital Clock</h2>
+            <div class="clock-display" id="clock">00:00:00</div>
+            <div class="date-display" id="date">Loading Date...</div>
+        </div>
+
+        <div class="panel">
+            <h2>Countdown Timer</h2>
+            <div class="timer-display" id="timerDisplay">00:00</div>
+            
+            <div class="timer-inputs" id="inputsContainer">
+                <div class="input-group">
+                    <label>Min</label>
+                    <input type="number" id="minutesInput" min="0" max="99" value="05" placeholder="00">
+                </div>
+                <div class="input-group">
+                    <label>Sec</label>
+                    <input type="number" id="secondsInput" min="0" max="59" value="00" placeholder="00">
+                </div>
+            </div>
+
+            <div class="controls">
+                <button class="btn-primary" id="startBtn" onclick="toggleTimer()">Start</button>
+                <button class="btn-secondary" onclick="resetTimer()">Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. DIGITAL CLOCK LOGIC (setInterval)
+        // ==========================================
+        function updateClock() {
+            const now = new Date();
+            
+            // Format time string safely padding single digits
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            document.getElementById('clock').textContent = `${hours}:${minutes}:${seconds}`;
+
+            // Format date string beautifully
+            const options = { weekday: 'long', month: 'short', day: 'numeric' };
+            document.getElementById('date').textContent = now.toLocaleDateString('en-US', options);
+        }
+        
+        // Run clock instantly, then update every 1000ms
+        updateClock();
+        setInterval(updateClock, 1000);
+
+
+        // ==========================================
+        // 2. COUNTDOWN TIMER LOGIC (setInterval & DOM)
+        // ==========================================
+        let timerInterval = null;
+        let totalSecondsRemaining = 0;
+        let isPaused = true;
+
+        const timerDisplay = document.getElementById('timerDisplay');
+        const startBtn = document.getElementById('startBtn');
+        const inputsContainer = document.getElementById('inputsContainer');
+        const minInput = document.getElementById('minutesInput');
+        const secInput = document.getElementById('secondsInput');
+
+        function updateTimerDisplay(totalSecs) {
+            const m = Math.floor(totalSecs / 60);
+            const s = totalSecs % 60;
+            timerDisplay.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }
+
+        function toggleTimer() {
+            if (isPaused) {
+                // If initializing a fresh countdown run
+                if (timerInterval === null && !timerDisplay.classList.contains('timer-finished')) {
+                    const mins = parseInt(minInput.value) || 0;
+                    const secs = parseInt(secInput.value) || 0;
+                    totalSecondsRemaining = (mins * 60) + secs;
+
+                    if (totalSecondsRemaining <= 0) return; // Don't start empty timers
+                    
+                    inputsContainer.style.display = 'none'; // Hide inputs while running
+                }
+
+                // Clean up any remaining visual finished alerts if user loops manually
+                timerDisplay.classList.remove('timer-finished');
+
+                // Switch states & initiate Interval logic
+                isPaused = false;
+                startBtn.textContent = 'Pause';
+                startBtn.style.background = 'linear-gradient(135deg, #e2e8f0, #cbd5e1)';
+                startBtn.style.color = '#1e293b';
+                startBtn.style.boxShadow = 'none';
+
+                timerInterval = setInterval(() => {
+                    totalSecondsRemaining--;
+                    updateTimerDisplay(totalSecondsRemaining);
+
+                    if (totalSecondsRemaining <= 0) {
+                        clearInterval(timerInterval);
+                        timerInterval = null;
+                        isPaused = true;
+                        
+                        // DOM manipulation to signal completion state
+                        timerDisplay.classList.add('timer-finished');
+                        timerDisplay.textContent = "00:00";
+                        startBtn.textContent = 'Start';
+                        startBtn.style.background = '';
+                        startBtn.style.color = '';
+                        inputsContainer.style.display = 'flex';
+                    }
+                }, 1000);
+
+            } else {
+                // Handle Pausing state
+                clearInterval(timerInterval);
+                isPaused = true;
+                startBtn.textContent = 'Resume';
+                startBtn.style.background = 'linear-gradient(135deg, #ec4899, #f43f5e)';
+                startBtn.style.color = 'white';
+            }
+        }
+
+        function resetTimer() {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            isPaused = true;
+            totalSecondsRemaining = 0;
+            
+            // Re-render raw DOM elements back to structural setup
+            timerDisplay.classList.remove('timer-finished');
+            timerDisplay.textContent = '00:00';
+            startBtn.textContent = 'Start';
+            startBtn.style.background = '';
+            startBtn.style.color = '';
+            inputsContainer.style.display = 'flex';
+        }
+    </script>
+</body>
+</html>
